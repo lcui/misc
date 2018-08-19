@@ -1,7 +1,7 @@
 import re
 
 def load_setting(filename):
-    ptn = re.compile("(\d+)\s+(\d+)\s+(\d+)")
+    ptn = re.compile("([0-9a-fA-F]+)\s+([0-9a-fA-F]+)\s+([0-9a-fA-F]+)")
     settings = []
     dups = {}
     with open(filename, 'r') as f:
@@ -11,9 +11,9 @@ def load_setting(filename):
             m = ptn.match(line)
             if m:
                 #print(line)
-                ID  = int(m.group(1))
-                reg = int(m.group(2))
-                val = int(m.group(3))
+                ID  = m.group(1).strip()
+                reg = m.group(2).strip()
+                val = m.group(3).strip()
 
                 #print(ID, reg, val)
                 if ID not in dups:
@@ -25,7 +25,7 @@ def load_setting(filename):
 
                 settings.append((ID, reg, val, lines[i].rstrip()))
             else:
-                settings.append((-1, -1, -1, lines[i].rstrip()))
+                settings.append(("", -1, -1, lines[i].rstrip()))
 
     return settings, dups
 
@@ -34,7 +34,7 @@ def clean_settings(settings, dups, output):
         line = settings[i]
         ID  = line[0]
         reg = line[1]
-        if ID < 0:
+        if not ID:
             print(line[3], file=output)
             continue
 
@@ -50,7 +50,7 @@ def print_info(settings, dups):
         ID  = line[0]
         reg = line[1]
         val = line[2]
-        if ID < 0:
+        if not ID:
             continue
 
         if reg not in reginfo:
@@ -59,9 +59,10 @@ def print_info(settings, dups):
         reginfo[reg].append((line[2], i))
 
     for reg in reginfo:
-        print("Register %d:" % reg)
-        for i in reginfo[reg]:
-            print("\t @line%4d: %d" % (i[1], i[0]))
+        if len(reginfo[reg]) > 1:
+            print("Register %s, repeat %d times" % (reg, len(reginfo[reg])))
+            for i in reginfo[reg]:
+                print("\t @line%4d: %s" % (i[1], i[0]))
 
 
 if __name__ == '__main__':
